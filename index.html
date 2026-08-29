@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0f1115" />
+<title>Training Log</title>
+<style>
+  :root{
+    --bg:#0f1115;
+    --card:#171a21;
+    --muted:#8c94a3;
+    --text:#f4f6f8;
+    --accent:#4f8cff;
+    --border:#2a2f3a;
+    --danger:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;
+    min-height:100vh;
+    padding-bottom:88px;
+  }
+  .wrap{
+    width:min(680px,100%);
+    margin:0 auto;
+    padding:18px 16px 24px;
+  }
+  h1{font-size:24px;margin:4px 0 18px}
+  h2{font-size:17px;margin:0 0 12px}
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+  label{
+    display:block;
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:7px;
+  }
+  input,select,button{width:100%;font:inherit}
+  input,select{
+    background:#101319;
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:13px 12px;
+    outline:none;
+  }
+  input:focus,select:focus{border-color:var(--accent)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .field{margin-bottom:13px}
+
+  .autocomplete-field{position:relative}
+  .suggestions{
+    display:none;
+    position:absolute;
+    z-index:30;
+    left:0;
+    right:0;
+    top:72px;
+    max-height:280px;
+    overflow-y:auto;
+    background:#101319;
+    border:1px solid var(--border);
+    border-radius:12px;
+    box-shadow:0 10px 28px rgba(0,0,0,.35);
+  }
+  .suggestions.show{display:block}
+  .suggestion{
+    padding:12px 13px;
+    border-top:1px solid rgba(255,255,255,.06);
+    cursor:pointer;
+  }
+  .suggestion:first-child{border-top:0}
+  .suggestion:active{background:#1b2029}
+  .suggestion .match{font-weight:800;color:var(--text)}
+
+  .previous{
+    margin-top:7px;
+    min-height:20px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .primary,.secondary,.danger{
+    border-radius:12px;
+    padding:13px 12px;
+    font-weight:700;
+  }
+  .primary{border:0;background:var(--accent);color:white}
+  .secondary{border:1px solid var(--border);background:#11151c;color:var(--text)}
+  .danger{border:1px solid rgba(255,107,107,.35);background:transparent;color:var(--danger)}
+  .inline-actions{display:grid;grid-template-columns:1fr auto;gap:8px}
+  .inline-actions button{width:auto;padding-left:16px;padding-right:16px}
+  .set-list,.exercise-list{display:flex;flex-direction:column;gap:10px}
+  .exercise-block{
+    padding:12px;
+    background:#11151c;
+    border-radius:12px;
+    border:1px solid var(--border);
+  }
+  .exercise-title{font-weight:700;margin-bottom:8px}
+  .set-row,.exercise-manage-row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    padding:7px 0;
+    border-top:1px solid rgba(255,255,255,.06);
+  }
+  .set-row:first-of-type{border-top:0}
+  .delete{
+    width:auto;
+    border:0;
+    background:transparent;
+    color:var(--danger);
+    padding:4px 6px;
+  }
+  .empty{color:var(--muted);font-size:14px}
+  .tabs{
+    position:fixed;
+    left:0;right:0;bottom:0;
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    background:rgba(15,17,21,.96);
+    border-top:1px solid var(--border);
+    display:flex;
+    gap:10px;
+    justify-content:center;
+  }
+  .tab{
+    width:min(320px,48%);
+    border:0;
+    border-radius:12px;
+    padding:13px 10px;
+    background:#1c212a;
+    color:var(--muted);
+    font-weight:700;
+  }
+  .tab.active{background:var(--accent);color:white}
+  .page{display:none}.page.active{display:block}
+  canvas{
+    width:100%;
+    height:260px;
+    background:#101319;
+    border-radius:12px;
+    display:block;
+  }
+  .stats{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:12px;
+  }
+  .stat{
+    background:#11151c;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px;
+  }
+  .stat .k{color:var(--muted);font-size:12px}
+  .stat .v{font-size:20px;font-weight:700;margin-top:4px}
+
+  .settings-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  .color-control{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .color-control input[type="color"]{
+    width:52px;
+    height:44px;
+    padding:3px;
+    border-radius:10px;
+    flex:0 0 auto;
+  }
+  .color-code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .section-gap{margin-top:14px}
+
+  details summary{
+    cursor:pointer;
+    font-weight:700;
+    list-style:none;
+  }
+  details summary::-webkit-details-marker{display:none}
+  .manage{margin-top:14px}
+  .tiny{font-size:12px;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section id="recordPage" class="page active">
+    <h1>トレーニング記録</h1>
+
+    <div class="card">
+      <div class="field">
+        <label for="date">日付</label>
+        <input id="date" type="date" />
+      </div>
+
+      <div class="field autocomplete-field">
+        <label for="exerciseSearch">種目</label>
+        <input id="exerciseSearch" type="text" autocomplete="off" placeholder="種目名を入力" />
+        <div id="exerciseSuggestions" class="suggestions"></div>
+        <div id="previous" class="previous"></div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="weight">ウエイト (kg)</label>
+          <input id="weight" type="number" inputmode="decimal" min="0" step="0.5" placeholder="68" />
+        </div>
+        <div class="field">
+          <label for="reps">回数</label>
+          <input id="reps" type="number" inputmode="numeric" min="1" step="1" placeholder="8" />
+        </div>
+      </div>
+
+      <button id="addBtn" class="primary">セットを追加</button>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <strong>今日の記録</strong>
+        <span id="todayVolume" style="color:var(--muted);font-size:13px;"></span>
+      </div>
+      <div id="todayList" class="set-list"></div>
+      <button id="copyWorkoutBtn" class="secondary" style="margin-top:12px;">この日の記録をコピー</button>
+      <div id="copyStatus" class="tiny"></div>
+    </div>
+
+
+    <div class="card">
+      <details>
+        <summary>記録・表示設定</summary>
+        <div class="manage">
+
+          <h2>日付をまとめて変更</h2>
+          <div class="row">
+            <div class="field">
+              <label for="moveFromDate">移動元の日付</label>
+              <input id="moveFromDate" type="date" />
+            </div>
+            <div class="field">
+              <label for="moveToDate">移動先の日付</label>
+              <input id="moveToDate" type="date" />
+            </div>
+          </div>
+          <button id="moveDateBtn" class="secondary">この日の記録を全部移動</button>
+          <div id="moveDateInfo" class="tiny"></div>
+
+          <div class="section-gap"></div>
+          <h2>カラー</h2>
+          <div class="settings-grid">
+            <div class="field">
+              <label for="baseColor">ベースカラー</label>
+              <div class="color-control">
+                <input id="baseColor" type="color" value="#0f1115" />
+                <span id="baseColorCode" class="color-code">#0f1115</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="accentColor">サブカラー</label>
+              <div class="color-control">
+                <input id="accentColor" type="color" value="#4f8cff" />
+                <span id="accentColorCode" class="color-code">#4f8cff</span>
+              </div>
+            </div>
+          </div>
+          <button id="resetColorsBtn" class="secondary">カラーを初期状態に戻す</button>
+
+          <div class="section-gap"></div>
+          <h2>バックアップ</h2>
+          <button id="exportBackupBtn" class="secondary">JSONバックアップを保存</button>
+          <div style="height:8px;"></div>
+          <input id="importBackupFile" type="file" accept=".json,application/json" style="display:none;" />
+          <button id="importBackupBtn" class="secondary">JSONバックアップから復元</button>
+          <div id="backupStatus" class="tiny"></div>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary>種目を追加・管理</summary>
+        <div class="manage">
+          <div class="inline-actions">
+            <input id="newExercise" type="text" placeholder="新しい種目名" />
+            <button id="addExerciseBtn" class="secondary">追加</button>
+          </div>
+          <div class="tiny">追加した種目はこの端末のブラウザに保存されます。</div>
+          <div id="exerciseManageList" class="exercise-list" style="margin-top:12px;"></div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section id="analysisPage" class="page">
+    <h1>分析</h1>
+
+    <div class="card">
+      <div class="field">
+        <label for="analysisExercise">種目</label>
+        <select id="analysisExercise"></select>
+      </div>
+
+      <div class="field">
+        <label for="metric">表示</label>
+        <select id="metric">
+          <option value="volume">ボリューム</option>
+          <option value="maxWeight">最高重量</option>
+          <option value="e1rm">推定1RM</option>
+        </select>
+      </div>
+
+      <canvas id="chart" width="640" height="320"></canvas>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="k">最新</div>
+          <div id="latestStat" class="v">-</div>
+        </div>
+        <div class="stat">
+          <div class="k">最高</div>
+          <div id="bestStat" class="v">-</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-page="recordPage">記録</button>
+  <button class="tab" data-page="analysisPage">分析</button>
+</div>
+
+<script>
+const DEFAULT_EXERCISES = [
+  "マシンチェストプレス",
+  "アイソラテラルインクラインプレス",
+  "アイソラテラルデクラインプレス",
+  "ディップス",
+  "ペックフライ",
+  "ラテラルレイズ",
+  "ケーブルサイドレイズ",
+  "ダンベルサイドレイズ",
+  "マシンショルダープレス",
+  "ダンベルショルダープレス",
+  "ケーブルアップライトロウ",
+  "ケーブルプレスダウン",
+  "マシントライセプスエクステンション",
+  "オーバーヘッドエクステンション",
+  "チンニング",
+  "ラットプルダウン（ノーマル）",
+  "ラットプルダウン（ミディアムパラレル）",
+  "ベントオーバーロウ",
+  "アイソラテラルロウ",
+  "アイソラテラルDYロウ",
+  "ケーブルロウ",
+  "マシンロウ",
+  "DL",
+  "RDL",
+  "リニアレッグプレス",
+  "リニアハックスクワット",
+  "ハックスクワット",
+  "ブルガリアンスクワット",
+  "レッグカール",
+  "レッグエクステンション",
+  "ヒップアブダクション",
+  "ヒップアダクション",
+  "EZバープリーチャーカール",
+  "インクラインダンベルカール",
+  "マシンプリーチャーカール",
+  "アブドミナルクランチ",
+  "レッグレイズ",
+  "マシンレッグプレス",
+  "トーソローテーション"
+];
+
+let records = JSON.parse(localStorage.getItem("trainingRecords") || "[]");
+let customExercises = JSON.parse(localStorage.getItem("customExercises") || "[]");
+let removedDefaults = JSON.parse(localStorage.getItem("removedDefaultExercises") || "[]");
+
+const dateEl = document.getElementById("date");
+const exerciseSearchEl = document.getElementById("exerciseSearch");
+const exerciseSuggestionsEl = document.getElementById("exerciseSuggestions");
+let selectedExercise = "";
+const analysisExerciseEl = document.getElementById("analysisExercise");
+const weightEl = document.getElementById("weight");
+const repsEl = document.getElementById("reps");
+const previousEl = document.getElementById("previous");
+const todayList = document.getElementById("todayList");
+const todayVolume = document.getElementById("todayVolume");
+const metricEl = document.getElementById("metric");
+const latestStat = document.getElementById("latestStat");
+const bestStat = document.getElementById("bestStat");
+const chart = document.getElementById("chart");
+const ctx = chart.getContext("2d");
+const newExerciseEl = document.getElementById("newExercise");
+const exerciseManageList = document.getElementById("exerciseManageList");
+const copyStatusEl = document.getElementById("copyStatus");
+const moveFromDateEl = document.getElementById("moveFromDate");
+const moveToDateEl = document.getElementById("moveToDate");
+const moveDateInfoEl = document.getElementById("moveDateInfo");
+const baseColorEl = document.getElementById("baseColor");
+const accentColorEl = document.getElementById("accentColor");
+const baseColorCodeEl = document.getElementById("baseColorCode");
+const accentColorCodeEl = document.getElementById("accentColorCode");
+const importBackupFileEl = document.getElementById("importBackupFile");
+const backupStatusEl = document.getElementById("backupStatus");
+
+function todayISO(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+dateEl.value = todayISO();
+moveFromDateEl.value = todayISO();
+moveToDateEl.value = todayISO();
+
+function allExercises(){
+  const activeDefaults = DEFAULT_EXERCISES.filter(x => !removedDefaults.includes(x));
+  const fromRecords = records.map(r=>r.exercise);
+  return [...new Set([...activeDefaults, ...customExercises, ...fromRecords])];
+}
+
+function fillSelects(){
+  const currentAnalysis = analysisExerciseEl.value;
+  const items = allExercises();
+
+  analysisExerciseEl.innerHTML = items.map(x=>`<option>${escapeHtml(x)}</option>`).join("");
+  if(items.includes(currentAnalysis)) analysisExerciseEl.value = currentAnalysis;
+
+  if(selectedExercise && !items.includes(selectedExercise)){
+    selectedExercise = "";
+    exerciseSearchEl.value = "";
+  }
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[m]));
+}
+
+function save(){
+  localStorage.setItem("trainingRecords", JSON.stringify(records));
+  localStorage.setItem("customExercises", JSON.stringify(customExercises));
+  localStorage.setItem("removedDefaultExercises", JSON.stringify(removedDefaults));
+}
+
+function lastWorkoutFor(exercise, beforeDate){
+  const candidates = records
+    .filter(r => r.exercise === exercise && r.date < beforeDate)
+    .sort((a,b)=>a.date.localeCompare(b.date));
+
+  if(!candidates.length) return [];
+
+  const lastDate = candidates.at(-1).date;
+  return candidates.filter(r=>r.date === lastDate);
+}
+
+function updatePrevious(){
+  const exercise = selectedExercise || exerciseSearchEl.value.trim();
+  if(!exercise){
+    previousEl.textContent = "";
+    return;
+  }
+
+  const sets = lastWorkoutFor(exercise, dateEl.value);
+  if(!sets.length){
+    previousEl.textContent = "前回記録なし";
+    return;
+  }
+
+  const date = sets[0].date.replaceAll("-","/");
+  const details = sets.map(s=>`${s.weight}kg×${s.reps}`).join(" / ");
+  previousEl.textContent = `前回 ${date}: ${details}`;
+}
+
+function renderToday(){
+  const dayRecords = records.filter(r => r.date === dateEl.value);
+  if(!dayRecords.length){
+    todayList.innerHTML = `<div class="empty">まだ記録がありません</div>`;
+    todayVolume.textContent = "";
+    return;
+  }
+
+  const grouped = {};
+  dayRecords.forEach(r => {
+    if(!grouped[r.exercise]) grouped[r.exercise] = [];
+    grouped[r.exercise].push(r);
+  });
+
+  todayList.innerHTML = Object.entries(grouped).map(([exercise, sets]) => `
+    <div class="exercise-block">
+      <div class="exercise-title">${escapeHtml(exercise)}</div>
+      ${sets.map((s,i)=>`
+        <div class="set-row">
+          <span>${i+1}セット目　${s.weight} kg × ${s.reps}回</span>
+          <button class="delete" onclick="deleteRecord('${s.id}')">削除</button>
+        </div>
+      `).join("")}
+    </div>
+  `).join("");
+
+  const vol = dayRecords.reduce((sum,r)=>sum + r.weight*r.reps, 0);
+  todayVolume.textContent = `総ボリューム ${vol.toLocaleString()} kg`;
+}
+
+function renderExerciseManager(){
+  const items = allExercises();
+  exerciseManageList.innerHTML = items.map(name => {
+    const hasRecords = records.some(r=>r.exercise === name);
+    const deletable = customExercises.includes(name) || DEFAULT_EXERCISES.includes(name);
+    return `
+      <div class="exercise-manage-row">
+        <span>${escapeHtml(name)}${hasRecords ? ' <span style="color:var(--muted);font-size:11px;">記録あり</span>' : ''}</span>
+        ${deletable ? `<button class="delete" onclick="removeExercise('${encodeURIComponent(name)}')">非表示</button>` : ""}
+      </div>
+    `;
+  }).join("");
+}
+
+window.removeExercise = function(encodedName){
+  const name = decodeURIComponent(encodedName);
+  if(records.some(r=>r.exercise === name)){
+    if(!confirm("この種目には記録があります。種目一覧から非表示にしますか？記録自体は残ります。")) return;
+  }
+
+  if(DEFAULT_EXERCISES.includes(name) && !removedDefaults.includes(name)){
+    removedDefaults.push(name);
+  }
+  customExercises = customExercises.filter(x=>x !== name);
+  save();
+  fillSelects();
+  renderExerciseManager();
+  updatePrevious();
+  renderAnalysis();
+}
+
+
+function workoutTextForDate(date){
+  const dayRecords = records.filter(r => r.date === date);
+  if(!dayRecords.length) return "";
+
+  const grouped = {};
+  const order = [];
+
+  dayRecords.forEach(r=>{
+    if(!grouped[r.exercise]){
+      grouped[r.exercise] = [];
+      order.push(r.exercise);
+    }
+    grouped[r.exercise].push(r);
+  });
+
+  return order.map(exercise=>{
+    const lines = grouped[exercise].map(s => `${s.weight}＊${s.reps}`);
+    return [exercise, ...lines].join("\n");
+  }).join("\n\n");
+}
+
+async function copyText(text){
+  if(navigator.clipboard && window.isSecureContext){
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  document.execCommand("copy");
+  textarea.remove();
+}
+
+document.getElementById("copyWorkoutBtn").addEventListener("click", async ()=>{
+  const text = workoutTextForDate(dateEl.value);
+
+  if(!text){
+    copyStatusEl.textContent = "この日の記録はありません";
+    return;
+  }
+
+  try{
+    await copyText(text);
+    copyStatusEl.textContent = "コピーしました";
+    setTimeout(()=>{ copyStatusEl.textContent = ""; }, 1800);
+  }catch(e){
+    alert("コピーできませんでした");
+  }
+});
+
+window.deleteRecord = function(id){
+  records = records.filter(r => r.id !== id);
+  save();
+  fillSelects();
+  updatePrevious();
+  renderToday();
+  renderExerciseManager();
+  renderAnalysis();
+}
+
+document.getElementById("addExerciseBtn").addEventListener("click",()=>{
+  const name = newExerciseEl.value.trim();
+  if(!name) return;
+
+  if(removedDefaults.includes(name)){
+    removedDefaults = removedDefaults.filter(x=>x!==name);
+  } else if(!DEFAULT_EXERCISES.includes(name) && !customExercises.includes(name)){
+    customExercises.push(name);
+  }
+
+  save();
+  fillSelects();
+  selectedExercise = name;
+  exerciseSearchEl.value = name;
+  newExerciseEl.value = "";
+  renderExerciseManager();
+  updatePrevious();
+});
+
+newExerciseEl.addEventListener("keydown", e=>{
+  if(e.key === "Enter") document.getElementById("addExerciseBtn").click();
+});
+
+document.getElementById("addBtn").addEventListener("click",()=>{
+  const weight = Number(weightEl.value);
+  const reps = Number(repsEl.value);
+  const exercise = selectedExercise || exerciseSearchEl.value.trim();
+
+  if(!exercise || !weight || !reps){
+    alert("種目・ウエイト・回数を入力してください");
+    return;
+  }
+
+  if(!allExercises().includes(exercise)){
+    alert("候補から種目を選んでください。新しい種目は「種目を追加・管理」から追加できます。");
+    return;
+  }
+
+  selectedExercise = exercise;
+
+  records.push({
+    id: Date.now().toString() + Math.random().toString(16).slice(2),
+    date: dateEl.value,
+    exercise: exercise,
+    weight,
+    reps
+  });
+
+  save();
+  fillSelects();
+  renderToday();
+  renderExerciseManager();
+  updatePrevious();
+
+  repsEl.value = "";
+  repsEl.focus();
+});
+
+
+
+
+function buildBackupData(){
+  return {
+    app: "training-log",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    records,
+    customExercises,
+    removedDefaults,
+    theme
+  };
+}
+
+function backupFileName(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `training_backup_${y}-${m}-${day}.json`;
+}
+
+function downloadJsonBackup(){
+  const data = buildBackupData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = backupFileName();
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+document.getElementById("exportBackupBtn").addEventListener("click", ()=>{
+  try{
+    downloadJsonBackup();
+    backupStatusEl.textContent = "バックアップを書き出しました";
+    setTimeout(()=>backupStatusEl.textContent="", 2200);
+  }catch(e){
+    alert("バックアップを書き出せませんでした");
+  }
+});
+
+document.getElementById("importBackupBtn").addEventListener("click", ()=>{
+  importBackupFileEl.value = "";
+  importBackupFileEl.click();
+});
+
+importBackupFileEl.addEventListener("change", async ()=>{
+  const file = importBackupFileEl.files && importBackupFileEl.files[0];
+  if(!file) return;
+
+  try{
+    const raw = await file.text();
+    const data = JSON.parse(raw);
+
+    if(!data || data.app !== "training-log" || !Array.isArray(data.records)){
+      throw new Error("invalid backup");
+    }
+
+    const recordCount = data.records.length;
+    const ok = confirm(
+      `バックアップから復元します。\n\n` +
+      `記録: ${recordCount}セット\n\n` +
+      `現在の端末内データはバックアップ内容で置き換わります。`
+    );
+    if(!ok) return;
+
+    records = data.records;
+    customExercises = Array.isArray(data.customExercises) ? data.customExercises : [];
+    removedDefaults = Array.isArray(data.removedDefaults) ? data.removedDefaults : [];
+
+    if(data.theme && typeof data.theme.base === "string" && typeof data.theme.accent === "string"){
+      theme = data.theme;
+    }
+
+    save();
+    localStorage.setItem("trainingTheme", JSON.stringify(theme));
+
+    selectedExercise = "";
+    exerciseSearchEl.value = "";
+
+    fillSelects();
+    applyTheme();
+    renderToday();
+    renderExerciseManager();
+    renderAnalysis();
+    updatePrevious();
+    updateMoveDateInfo();
+
+    backupStatusEl.textContent = `復元しました（${recordCount}セット）`;
+  }catch(e){
+    alert("このJSONは有効なトレーニングバックアップではありません");
+  }
+});
+
+const DEFAULT_THEME = {
+  base: "#0f1115",
+  accent: "#4f8cff"
+};
+
+let theme = JSON.parse(localStorage.getItem("trainingTheme") || "null") || {...DEFAULT_THEME};
+
+function clamp(v,min,max){ return Math.min(max,Math.max(min,v)); }
+
+function hexToRgb(hex){
+  const h = hex.replace("#","");
+  return {
+    r: parseInt(h.slice(0,2),16),
+    g: parseInt(h.slice(2,4),16),
+    b: parseInt(h.slice(4,6),16)
+  };
+}
+
+function rgbToHex({r,g,b}){
+  return "#" + [r,g,b].map(v => clamp(Math.round(v),0,255).toString(16).padStart(2,"0")).join("");
+}
+
+function mix(hex1, hex2, amount){
+  const a = hexToRgb(hex1);
+  const b = hexToRgb(hex2);
+  return rgbToHex({
+    r:a.r + (b.r-a.r)*amount,
+    g:a.g + (b.g-a.g)*amount,
+    b:a.b + (b.b-a.b)*amount
+  });
+}
+
+function luminance(hex){
+  const {r,g,b}=hexToRgb(hex);
+  const vals=[r,g,b].map(v=>{
+    v/=255;
+    return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4);
+  });
+  return 0.2126*vals[0]+0.7152*vals[1]+0.0722*vals[2];
+}
+
+function applyTheme(){
+  const root = document.documentElement;
+  const base = theme.base;
+  const accent = theme.accent;
+  const isLight = luminance(base) > 0.42;
+
+  root.style.setProperty("--bg", base);
+  root.style.setProperty("--accent", accent);
+
+  if(isLight){
+    root.style.setProperty("--card", mix(base,"#000000",0.06));
+    root.style.setProperty("--border", mix(base,"#000000",0.18));
+    root.style.setProperty("--text", "#14171c");
+    root.style.setProperty("--muted", mix("#14171c",base,0.48));
+  }else{
+    root.style.setProperty("--card", mix(base,"#ffffff",0.045));
+    root.style.setProperty("--border", mix(base,"#ffffff",0.12));
+    root.style.setProperty("--text", "#f4f6f8");
+    root.style.setProperty("--muted", mix("#f4f6f8",base,0.50));
+  }
+
+  baseColorEl.value = base;
+  accentColorEl.value = accent;
+  baseColorCodeEl.textContent = base;
+  accentColorCodeEl.textContent = accent;
+
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if(themeMeta) themeMeta.setAttribute("content", base);
+}
+
+function saveTheme(){
+  localStorage.setItem("trainingTheme", JSON.stringify(theme));
+  applyTheme();
+}
+
+baseColorEl.addEventListener("input",()=>{
+  theme.base = baseColorEl.value;
+  saveTheme();
+});
+
+accentColorEl.addEventListener("input",()=>{
+  theme.accent = accentColorEl.value;
+  saveTheme();
+});
+
+document.getElementById("resetColorsBtn").addEventListener("click",()=>{
+  theme = {...DEFAULT_THEME};
+  saveTheme();
+});
+
+function updateMoveDateInfo(){
+  const from = moveFromDateEl.value;
+  if(!from){
+    moveDateInfoEl.textContent = "";
+    return;
+  }
+  const count = records.filter(r=>r.date===from).length;
+  const exercises = new Set(records.filter(r=>r.date===from).map(r=>r.exercise)).size;
+  moveDateInfoEl.textContent = count
+    ? `${count}セット・${exercises}種目の記録があります`
+    : "この日の記録はありません";
+}
+
+moveFromDateEl.addEventListener("change", updateMoveDateInfo);
+
+document.getElementById("moveDateBtn").addEventListener("click",()=>{
+  const from = moveFromDateEl.value;
+  const to = moveToDateEl.value;
+
+  if(!from || !to){
+    alert("移動元と移動先の日付を選んでください");
+    return;
+  }
+  if(from === to){
+    alert("移動元と移動先が同じ日付です");
+    return;
+  }
+
+  const target = records.filter(r=>r.date===from);
+  if(!target.length){
+    alert("移動元の日付に記録がありません");
+    return;
+  }
+
+  const destinationCount = records.filter(r=>r.date===to).length;
+  const message = destinationCount
+    ? `${from} の ${target.length}セットを ${to} に移動します。\n移動先にはすでに ${destinationCount}セットあります。既存記録に追加されます。`
+    : `${from} の ${target.length}セットを ${to} に移動します。`;
+
+  if(!confirm(message)) return;
+
+  records.forEach(r=>{
+    if(r.date === from) r.date = to;
+  });
+
+  save();
+  renderToday();
+  renderAnalysis();
+  updatePrevious();
+  updateMoveDateInfo();
+
+  alert("日付を変更しました");
+});
+
+applyTheme();
+updateMoveDateInfo();
+
+
+function normalizeText(s){
+  return String(s).toLowerCase()
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0)-0xFEE0))
+    .replace(/\s+/g,"");
+}
+
+function renderSuggestions(){
+  const q = exerciseSearchEl.value.trim();
+  const nq = normalizeText(q);
+  const items = allExercises();
+
+  let matches;
+  if(!q){
+    matches = items.slice(0, 12);
+  } else {
+    matches = items.filter(name => normalizeText(name).includes(nq)).slice(0, 12);
+  }
+
+  if(!matches.length){
+    exerciseSuggestionsEl.innerHTML = `<div class="suggestion" style="color:var(--muted)">候補なし</div>`;
+    exerciseSuggestionsEl.classList.add("show");
+    return;
+  }
+
+  exerciseSuggestionsEl.innerHTML = matches.map(name =>
+    `<div class="suggestion" data-name="${encodeURIComponent(name)}">${escapeHtml(name)}</div>`
+  ).join("");
+  exerciseSuggestionsEl.classList.add("show");
+}
+
+function chooseExercise(name){
+  selectedExercise = name;
+  exerciseSearchEl.value = name;
+  exerciseSuggestionsEl.classList.remove("show");
+  updatePrevious();
+}
+
+exerciseSearchEl.addEventListener("focus", renderSuggestions);
+
+exerciseSearchEl.addEventListener("input", ()=>{
+  const typed = exerciseSearchEl.value.trim();
+  selectedExercise = allExercises().includes(typed) ? typed : "";
+  renderSuggestions();
+  updatePrevious();
+});
+
+exerciseSuggestionsEl.addEventListener("click", e=>{
+  const item = e.target.closest(".suggestion[data-name]");
+  if(!item) return;
+  chooseExercise(decodeURIComponent(item.dataset.name));
+});
+
+document.addEventListener("click", e=>{
+  if(!e.target.closest(".autocomplete-field")){
+    exerciseSuggestionsEl.classList.remove("show");
+  }
+});
+
+exerciseSearchEl.addEventListener("keydown", e=>{
+  if(e.key === "Enter"){
+    const first = exerciseSuggestionsEl.querySelector(".suggestion[data-name]");
+    if(first){
+      e.preventDefault();
+      chooseExercise(decodeURIComponent(first.dataset.name));
+      weightEl.focus();
+    }
+  }
+});
+
+dateEl.addEventListener("change", ()=>{
+  updatePrevious();
+  renderToday();
+});
+analysisExerciseEl.addEventListener("change", renderAnalysis);
+metricEl.addEventListener("change", renderAnalysis);
+
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+    document.getElementById(btn.dataset.page).classList.add("active");
+    if(btn.dataset.page === "analysisPage") renderAnalysis();
+  });
+});
+
+function dailyData(exercise){
+  const map = {};
+  records.filter(r=>r.exercise===exercise).forEach(r=>{
+    if(!map[r.date]) map[r.date] = [];
+    map[r.date].push(r);
+  });
+
+  return Object.entries(map).sort(([a],[b])=>a.localeCompare(b)).map(([date,sets])=>{
+    const volume = sets.reduce((sum,s)=>sum+s.weight*s.reps,0);
+    const maxWeight = Math.max(...sets.map(s=>s.weight));
+    const e1rm = Math.max(...sets.map(s=>s.weight*(1+s.reps/30)));
+    return {date,volume,maxWeight,e1rm};
+  });
+}
+
+function renderAnalysis(){
+  const ex = analysisExerciseEl.value;
+  const metric = metricEl.value;
+  const data = dailyData(ex);
+
+  ctx.clearRect(0,0,chart.width,chart.height);
+
+  if(!data.length){
+    ctx.fillStyle = "#8c94a3";
+    ctx.font = "18px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("この種目の記録はまだありません", chart.width/2, chart.height/2);
+    latestStat.textContent = "-";
+    bestStat.textContent = "-";
+    return;
+  }
+
+  const vals = data.map(d=>d[metric]);
+  const maxV = Math.max(...vals);
+  const minV = Math.min(...vals);
+  const pad = 44;
+  const w = chart.width - pad*2;
+  const h = chart.height - pad*2;
+  const range = Math.max(1, maxV-minV);
+
+  ctx.strokeStyle = "#2a2f3a";
+  ctx.lineWidth = 1;
+  for(let i=0;i<5;i++){
+    const y=pad + h*i/4;
+    ctx.beginPath();
+    ctx.moveTo(pad,y);
+    ctx.lineTo(chart.width-pad,y);
+    ctx.stroke();
+  }
+
+  const points = data.map((d,i)=>{
+    const x = data.length===1 ? chart.width/2 : pad + w*i/(data.length-1);
+    const y = data.length===1 || maxV===minV ? chart.height/2 : pad + h*(1 - (d[metric]-minV)/range);
+    return {x,y,v:d[metric],date:d.date};
+  });
+
+  ctx.strokeStyle = "#4f8cff";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  points.forEach((p,i)=> i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y));
+  ctx.stroke();
+
+  ctx.fillStyle = "#4f8cff";
+  points.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,5,0,Math.PI*2);
+    ctx.fill();
+  });
+
+  ctx.fillStyle = "#8c94a3";
+  ctx.font = "12px sans-serif";
+  ctx.textAlign = "center";
+  points.forEach((p,i)=>{
+    if(data.length <= 6 || i===0 || i===data.length-1 || i%Math.ceil(data.length/5)===0){
+      ctx.fillText(p.date.slice(5).replace("-","/"),p.x,chart.height-16);
+    }
+  });
+
+  const format = v => metric === "e1rm" ? `${v.toFixed(1)} kg` :
+    metric === "maxWeight" ? `${v} kg` : `${Math.round(v).toLocaleString()} kg`;
+
+  latestStat.textContent = format(vals.at(-1));
+  bestStat.textContent = format(maxV);
+}
+
+fillSelects();
+updatePrevious();
+renderToday();
+renderExerciseManager();
+renderAnalysis();
+</script>
+</body>
+</html>
